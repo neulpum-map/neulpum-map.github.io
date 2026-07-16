@@ -1,0 +1,1043 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>늘품 지역사회 지도</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
+<style>
+/* ══════════════════════════════════════════════════════════════
+   디자인 토큰 — 색을 바꾸고 싶으면 여기만 고치세요
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --ground:#F4F6F9; --surface:#FFF; --surface-2:#EBEFF5; --surface-3:#E1E7EF;
+  --ink:#141B24; --ink-2:#4C5867; --ink-3:#79859A;
+  --line:#DCE2EA; --line-strong:#C0CAD8;
+  --accent:#1D4ED8; --accent-soft:#E5EBFB;
+  --warn:#B5342B; --warn-soft:#FAE6E4;
+  /* 분류 6종. 색만으로 구분하게 두지 않는다 — 아이콘과 글자를 항상 함께 쓴다. */
+  --cafe:#8A5524; --food:#B5342B; --mart:#0E7490; --unmanned:#6D28D9; --public:#1D4ED8; --sports:#15703B; --center:#BE185D;
+  --cafe-t:#6F441C; --food-t:#93291F; --mart-t:#0B5C73; --unmanned-t:#5B21B6; --public-t:#1A3FAC; --sports-t:#115C30; --center-t:#9D174D;
+  --cafe-bg:#F3E9DF; --food-bg:#FAE6E4; --mart-bg:#DCEEF3; --unmanned-bg:#EDE7FC; --public-bg:#E5EBFB; --sports-bg:#DFF0E5; --center-bg:#FBE3EC;
+  --sh1:0 1px 2px rgba(20,27,36,.05),0 4px 14px rgba(20,27,36,.06);
+  --sh2:0 2px 4px rgba(20,27,36,.07),0 10px 28px rgba(20,27,36,.10);
+  --r:14px;
+  --tile-filter:none;
+}
+@media (prefers-color-scheme:dark){ :root{
+  --ground:#0D1218; --surface:#161D26; --surface-2:#1E2732; --surface-3:#27323F;
+  --ink:#E9EEF4; --ink-2:#A7B3C2; --ink-3:#768292;
+  --line:#28323F; --line-strong:#3A4756;
+  --accent:#7BA4FF; --accent-soft:#1B2740;
+  --warn:#F0827A; --warn-soft:#2E1B19;
+  --cafe:#A96A2E; --food:#CE4A40; --mart:#1189AB; --unmanned:#8B5CF6; --public:#3B6FE8; --sports:#1E8F4E; --center:#DB2777;
+  --cafe-t:#D9A468; --food-t:#F0827A; --mart-t:#4FC0DC; --unmanned-t:#B99DFA; --public-t:#8FB2FF; --sports-t:#5DC489; --center-t:#F9A8D4;
+  --cafe-bg:#2C2118; --food-bg:#2E1B19; --mart-bg:#0E2830; --unmanned-bg:#1F1836; --public-bg:#161F33; --sports-bg:#132A1D; --center-bg:#2E1522;
+  --sh1:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.28);
+  --sh2:0 2px 6px rgba(0,0,0,.36),0 12px 30px rgba(0,0,0,.4);
+}}
+:root[data-theme="dark"]{
+  --ground:#0D1218; --surface:#161D26; --surface-2:#1E2732; --surface-3:#27323F;
+  --ink:#E9EEF4; --ink-2:#A7B3C2; --ink-3:#768292;
+  --line:#28323F; --line-strong:#3A4756;
+  --accent:#7BA4FF; --accent-soft:#1B2740;
+  --warn:#F0827A; --warn-soft:#2E1B19;
+  --cafe:#A96A2E; --food:#CE4A40; --mart:#1189AB; --unmanned:#8B5CF6; --public:#3B6FE8; --sports:#1E8F4E; --center:#DB2777;
+  --cafe-t:#D9A468; --food-t:#F0827A; --mart-t:#4FC0DC; --unmanned-t:#B99DFA; --public-t:#8FB2FF; --sports-t:#5DC489; --center-t:#F9A8D4;
+  --cafe-bg:#2C2118; --food-bg:#2E1B19; --mart-bg:#0E2830; --unmanned-bg:#1F1836; --public-bg:#161F33; --sports-bg:#132A1D; --center-bg:#2E1522;
+  --sh1:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.28);
+  --sh2:0 2px 6px rgba(0,0,0,.36),0 12px 30px rgba(0,0,0,.4);
+}
+:root[data-theme="light"]{
+  --ground:#F4F6F9; --surface:#FFF; --surface-2:#EBEFF5; --surface-3:#E1E7EF;
+  --ink:#141B24; --ink-2:#4C5867; --ink-3:#79859A;
+  --line:#DCE2EA; --line-strong:#C0CAD8;
+  --accent:#1D4ED8; --accent-soft:#E5EBFB;
+  --warn:#B5342B; --warn-soft:#FAE6E4;
+  --cafe:#8A5524; --food:#B5342B; --mart:#0E7490; --unmanned:#6D28D9; --public:#1D4ED8; --sports:#15703B; --center:#BE185D;
+  --cafe-t:#6F441C; --food-t:#93291F; --mart-t:#0B5C73; --unmanned-t:#5B21B6; --public-t:#1A3FAC; --sports-t:#115C30; --center-t:#9D174D;
+  --cafe-bg:#F3E9DF; --food-bg:#FAE6E4; --mart-bg:#DCEEF3; --unmanned-bg:#EDE7FC; --public-bg:#E5EBFB; --sports-bg:#DFF0E5; --center-bg:#FBE3EC;
+  --sh1:0 1px 2px rgba(20,27,36,.05),0 4px 14px rgba(20,27,36,.06);
+  --sh2:0 2px 4px rgba(20,27,36,.07),0 10px 28px rgba(20,27,36,.10);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,
+              'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',system-ui,sans-serif;
+  font-size:17px; line-height:1.65; -webkit-text-size-adjust:100%; word-break:keep-all;
+}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 72px}
+
+/* ── 머리말 ── */
+.masthead{display:flex;flex-direction:column;gap:10px;padding:30px 0 20px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;
+  font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--center-t);
+  background:var(--center-bg);padding:6px 12px;border-radius:999px}
+.eyebrow svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+h1{margin:0;font-size:clamp(29px,7vw,40px);font-weight:800;letter-spacing:-.035em;line-height:1.18;text-wrap:balance}
+.dek{margin:0;color:var(--ink-2);font-size:16.5px;max-width:46ch}
+
+/* ── 필터 ── */
+.filterbar{position:sticky;top:0;z-index:900;
+  background:color-mix(in srgb,var(--ground) 88%,transparent);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);margin:0 -16px;padding:10px 16px}
+.filter-label{font-size:12.5px;font-weight:700;color:var(--ink-3);letter-spacing:.05em;margin-bottom:8px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;min-height:46px;padding:0 15px;
+  border:1.5px solid var(--line-strong);border-radius:999px;background:var(--surface);color:var(--ink-2);
+  font:inherit;font-size:15.5px;font-weight:700;cursor:pointer;white-space:nowrap;
+  transition:background .14s,color .14s,border-color .14s}
+.chip svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.chip:hover{border-color:var(--ink-3)}
+.chip[aria-pressed="true"]{color:#fff;border-color:transparent}
+.chip[aria-pressed="true"][data-cat="all"]{background:var(--ink)}
+.chip[aria-pressed="true"][data-cat="cafe"]{background:var(--cafe)}
+.chip[aria-pressed="true"][data-cat="food"]{background:var(--food)}
+.chip[aria-pressed="true"][data-cat="mart"]{background:var(--mart)}
+.chip[aria-pressed="true"][data-cat="unmanned"]{background:var(--unmanned)}
+.chip[aria-pressed="true"][data-cat="public"]{background:var(--public)}
+.chip[aria-pressed="true"][data-cat="sports"]{background:var(--sports)}
+:is(.chip,.card-link,.btn,button):focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* ── 배치 ──
+   기본은 폰(위아래로 쌓기). QR로 들어오는 사람은 대부분 폰이라 이쪽이 기준이다.
+   PC에서는 아래 @media 에서 지도와 목록을 좌우로 갈라놓는다. */
+.main{display:flex;flex-direction:column}
+
+/* ── 지도 ── */
+/* 창 높이에만 맡기면(66vh 등) 창을 낮추는 순간 지도가 끝없이 쪼그라든다.
+   clamp 로 아래위를 막아, 어떤 창 크기에서도 쓸 만한 크기를 유지한다.
+   380px 아래로는 핀 몇 개만 보여 지도 구실을 못 함. */
+#map{height:clamp(380px,62vh,580px);margin:20px 0 0;border-radius:var(--r);
+  border:1px solid var(--line);box-shadow:var(--sh1);z-index:1;background:var(--surface-2)}
+#map.editing{cursor:crosshair;border-color:var(--warn);border-width:2px}
+.leaflet-tile-pane{filter:var(--tile-filter)}
+.leaflet-container{font:inherit;background:var(--surface-2)}
+
+.mk{background:none;border:0}
+.mk i{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
+  color:#fff;font-weight:800;font-size:14px;font-style:normal;font-variant-numeric:tabular-nums;
+  border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);
+  transition:transform .15s}
+.mk:hover i{transform:scale(1.15)}
+.mk[data-cat="cafe"] i{background:var(--cafe)}
+.mk[data-cat="food"] i{background:var(--food)}
+.mk[data-cat="mart"] i{background:var(--mart)}
+.mk[data-cat="unmanned"] i{background:var(--unmanned)}
+.mk[data-cat="public"] i{background:var(--public)}
+.mk[data-cat="sports"] i{background:var(--sports)}
+.mk-center i{background:var(--center);width:42px;height:42px;border-width:3px}
+.mk-center svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.leaflet-popup-content-wrapper{background:var(--surface);color:var(--ink);
+  border-radius:12px;box-shadow:var(--sh2);border:1px solid var(--line)}
+.leaflet-popup-tip{background:var(--surface);border:1px solid var(--line)}
+.leaflet-popup-content{margin:0;width:266px!important;font:inherit}
+.leaflet-popup-close-button{width:34px!important;height:34px!important;font-size:22px!important;
+  padding:5px 0 0!important;color:var(--ink-3)!important}
+.leaflet-control-zoom a{background:var(--surface)!important;color:var(--ink)!important;
+  border-color:var(--line)!important;font-size:20px!important}
+.leaflet-bar{box-shadow:var(--sh1)!important;border:1px solid var(--line)!important}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 84%,transparent)!important;
+  color:var(--ink-3)!important;font-size:10.5px!important}
+.leaflet-control-attribution a{color:var(--ink-2)!important}
+
+.pop-strip{display:flex;gap:2px;overflow-x:auto;background:var(--surface-2);
+  border-radius:11px 11px 0 0;scroll-snap-type:x mandatory}
+.pop-strip::-webkit-scrollbar{height:4px}
+.pop-strip::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:2px}
+.pop-frame{position:relative;flex:0 0 auto;width:60%;scroll-snap-align:start}
+.pop-frame img{width:100%;height:132px;object-fit:cover;display:block;background:var(--surface-3)}
+.pop-frame:first-child img{border-radius:11px 0 0 0}
+.pop-none{height:60px;display:grid;place-items:center;background:var(--surface-2);
+  border-radius:11px 11px 0 0;color:var(--ink-3);font-size:12px;font-weight:700}
+.pop-b{padding:11px 13px 13px;display:flex;flex-direction:column;gap:7px}
+.pop-b .name{margin:0;font-size:17.5px;font-weight:800;letter-spacing:-.03em;line-height:1.3}
+.pop-b .addr{margin:0;font-size:12.5px;color:var(--ink-3);line-height:1.4}
+
+/* ── 편집 ── */
+.tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0 0}
+/* display:flex 는 hidden 속성(=display:none)을 이겨버린다. 명시적으로 되돌려야
+   ?edit 없이 들어온 이용자에게 편집 버튼이 노출되지 않는다. */
+.tools[hidden]{display:none}
+.btn{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 15px;
+  border:1.5px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);
+  font:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:filter .14s,background .14s}
+.btn:hover{filter:brightness(.96)}
+.btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.btn-main{background:var(--ink);color:var(--ground);border-color:transparent}
+.btn-warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.btn[hidden]{display:none}
+.tool-note{font-size:13.5px;color:var(--ink-3);font-weight:600}
+
+.editbanner{margin:14px 0 0;padding:12px 14px;border-radius:10px;
+  background:var(--warn-soft);color:var(--warn);border:1.5px dashed currentColor;
+  font-size:14.5px;font-weight:700;line-height:1.5}
+.editbanner[hidden]{display:none}
+
+dialog{border:0;border-radius:var(--r);padding:0;background:var(--surface);color:var(--ink);
+  box-shadow:var(--sh2);width:min(460px,calc(100vw - 32px));max-height:88vh}
+dialog::backdrop{background:rgba(10,14,20,.55);backdrop-filter:blur(2px)}
+.dlg-h{padding:16px 18px 12px;border-bottom:1px solid var(--line);
+  font-size:18px;font-weight:800;letter-spacing:-.02em}
+.dlg-b{padding:16px 18px;display:flex;flex-direction:column;gap:13px;overflow-y:auto;max-height:60vh}
+.dlg-f{padding:12px 18px 16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+.dlg-f .btn-warn{margin-left:auto}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-size:13px;font-weight:700;color:var(--ink-2);letter-spacing:-.01em}
+.f .hint{font-size:12px;color:var(--ink-3);font-weight:500}
+.f input[type=text],.f input[type=number],.f select,.f textarea{
+  font:inherit;font-size:15.5px;padding:9px 11px;border-radius:9px;
+  border:1.5px solid var(--line-strong);background:var(--ground);color:var(--ink);width:100%}
+.f textarea{resize:vertical;min-height:74px;line-height:1.55}
+.f input:focus,.f select:focus,.f textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.f-row{display:grid;grid-template-columns:1fr 116px;gap:10px}
+.prev{display:flex;flex-direction:column;gap:8px}
+.prev[hidden]{display:none}
+.prev-row{display:flex;align-items:center;gap:9px}
+.prev-row img{width:56px;height:56px;flex:0 0 auto;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.prev-row input{flex:1;min-width:0}
+.prev-row .btn{flex:0 0 auto;min-height:38px;padding:0 11px;font-size:14px}
+
+/* ── 목록 ── */
+.count{margin:26px 0 12px;font-size:14px;font-weight:700;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.list{display:grid;gap:16px}
+.card{position:relative;display:flex;flex-direction:column;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh1);
+  scroll-margin-top:96px;transition:box-shadow .18s,border-color .18s;cursor:pointer}
+.card:hover{border-color:var(--line-strong)}
+.card.is-active{border-color:var(--ink);box-shadow:var(--sh2)}
+.card[hidden]{display:none}
+
+/* 사진 띠 — 한 장소에 여러 장. 가로로 넘겨서 봄 */
+.strip{display:flex;gap:2px;overflow-x:auto;background:var(--surface-2);
+  scroll-snap-type:x mandatory;scrollbar-width:thin}
+.strip::-webkit-scrollbar{height:5px}
+.strip::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px}
+.frame{position:relative;flex:0 0 auto;width:min(60%,210px);scroll-snap-align:start}
+.frame img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:var(--surface-3)}
+.cap{position:absolute;left:0;right:0;bottom:0;padding:16px 9px 7px;
+  font-size:12.5px;font-weight:700;color:#fff;letter-spacing:-.01em;
+  background:linear-gradient(transparent,rgba(0,0,0,.75))}
+.strip-empty{flex:1;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  color:var(--ink-3);text-align:center}
+.strip-empty svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.7}
+.strip-empty b{font-size:12.5px;font-weight:700}
+
+.shot-num{position:absolute;top:10px;left:10px;z-index:2;width:30px;height:30px;border-radius:50%;
+  display:grid;place-items:center;color:#fff;font-size:15px;font-weight:800;
+  font-variant-numeric:tabular-nums;border:2px solid rgba(255,255,255,.92);
+  box-shadow:0 2px 7px rgba(0,0,0,.45)}
+.card[data-cat="cafe"] .shot-num{background:var(--cafe)}
+.card[data-cat="food"] .shot-num{background:var(--food)}
+.card[data-cat="mart"] .shot-num{background:var(--mart)}
+.card[data-cat="unmanned"] .shot-num{background:var(--unmanned)}
+.card[data-cat="public"] .shot-num{background:var(--public)}
+.card[data-cat="sports"] .shot-num{background:var(--sports)}
+.body{padding:14px 15px 15px;display:flex;flex-direction:column;gap:9px;min-width:0}
+.tagrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;
+  padding:3px 9px;border-radius:999px;letter-spacing:-.01em}
+.tag svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+:is(.card,.pop-b)[data-cat="cafe"] .tag-cat{background:var(--cafe-bg);color:var(--cafe-t)}
+:is(.card,.pop-b)[data-cat="food"] .tag-cat{background:var(--food-bg);color:var(--food-t)}
+:is(.card,.pop-b)[data-cat="mart"] .tag-cat{background:var(--mart-bg);color:var(--mart-t)}
+:is(.card,.pop-b)[data-cat="unmanned"] .tag-cat{background:var(--unmanned-bg);color:var(--unmanned-t)}
+:is(.card,.pop-b)[data-cat="public"] .tag-cat{background:var(--public-bg);color:var(--public-t)}
+:is(.card,.pop-b)[data-cat="sports"] .tag-cat{background:var(--sports-bg);color:var(--sports-t)}
+.tag-walk{background:var(--surface-2);color:var(--ink-2);font-variant-numeric:tabular-nums}
+.name{margin:0;font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1.3}
+.addr{margin:0;font-size:14px;color:var(--ink-3);line-height:1.45}
+.practice{background:var(--surface-2);border-radius:10px;padding:10px 12px;border-left:3px solid var(--accent)}
+.practice b{display:block;font-size:12.5px;font-weight:800;color:var(--accent);letter-spacing:.02em;margin-bottom:3px}
+/* 줄바꿈을 살린다 — 한 곳에서 여러 가지를 하는 데(라면/냉장고/커피 등)는
+   문단을 나눠 적어야 읽힌다. pre-wrap 이라야 data.js 의 \n 이 화면에 반영된다. */
+.practice p{margin:0;font-size:15px;color:var(--ink);line-height:1.55;white-space:pre-wrap}
+.pop-b .practice p{font-size:14px}
+.facts{display:flex;flex-wrap:wrap;gap:4px 8px;margin:0;padding:0;list-style:none}
+.facts li{font-size:13px;color:var(--ink-2);font-weight:600;background:var(--surface-2);border-radius:6px;padding:2px 8px}
+.card-link{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;
+  background:var(--accent-soft);color:var(--accent);border:0;border-radius:9px;
+  font:inherit;font-size:14.5px;font-weight:700;text-decoration:none;transition:filter .14s}
+.card-link:hover{filter:brightness(.94)}
+.card-link::after{content:"→";font-weight:800}
+.empty{padding:40px 20px;text-align:center;color:var(--ink-3);background:var(--surface);
+  border:1px dashed var(--line-strong);border-radius:var(--r);font-weight:600;line-height:1.6}
+
+.note{margin-top:34px;padding:18px;background:var(--surface-2);border-radius:var(--r);border:1px solid var(--line)}
+.note h2{margin:0 0 8px;font-size:15px;font-weight:800}
+.note p{margin:0 0 8px;font-size:14.5px;color:var(--ink-2);line-height:1.6}
+.note p:last-child{margin-bottom:0}
+.note code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+  background:var(--surface);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+/* ── 넓은 화면(PC) ──
+   지도와 목록을 좌우로 갈라 지도 앱처럼 만든다.
+   지도는 sticky 로 붙여둬서, 목록을 내려도 지도가 따라온다.
+   top:96px 는 위에 붙어있는 필터바 높이만큼 비켜준 값. */
+@media (min-width:900px){
+  .wrap{max-width:1220px}
+  .main{display:grid;grid-template-columns:1fr minmax(370px,430px);gap:26px;align-items:start}
+  .col-map{position:sticky;top:96px}
+  .col-list{min-width:0}
+  #map{height:clamp(420px,calc(100vh - 200px),760px);margin-top:0}
+  .count{margin-top:0}
+  .frame{width:min(52%,190px)}
+  .masthead{padding:38px 0 22px}
+}
+
+@media (max-width:430px){
+  .name{font-size:18.5px}
+  .f-row{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<svg style="display:none" aria-hidden="true" focusable="false">
+  <symbol id="ico-cafe" viewBox="0 0 24 24"><path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z"/><path d="M17 9h2.2a2.5 2.5 0 0 1 0 5H17"/><path d="M7 2.5v2.6M11 2.5v2.6M15 2.5v2.6"/><path d="M3 21h16"/></symbol>
+  <symbol id="ico-food" viewBox="0 0 24 24"><path d="M5 2.5v6a2.5 2.5 0 0 0 5 0v-6"/><path d="M7.5 11v10.5"/><path d="M17.5 2.5c1.7 2 2 5 2 7.2h-4c0-2.2.3-5.2 2-7.2Z"/><path d="M17.5 9.7v11.8"/></symbol>
+  <symbol id="ico-mart" viewBox="0 0 24 24"><circle cx="9.5" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h2.8l2.6 12.1a1.8 1.8 0 0 0 1.8 1.4h8.4a1.8 1.8 0 0 0 1.8-1.4L21 7.3H5.6"/></symbol>
+  <symbol id="ico-public" viewBox="0 0 24 24"><path d="M2.5 21h19"/><path d="M2.5 10h19L12 3 2.5 10Z"/><path d="M5.5 10v11M9.8 10v11M14.2 10v11M18.5 10v11"/></symbol>
+  <!-- 무인매장: 키오스크(화면+받침) + 카드 투입구 -->
+  <symbol id="ico-unmanned" viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="12" rx="1.8"/><path d="M7.5 6h9M7.5 9h5"/><path d="M12 14.5v3"/><path d="M6.5 21.5h11a1.5 1.5 0 0 0 1.5-1.5v-1a1.5 1.5 0 0 0-1.5-1.5h-11A1.5 1.5 0 0 0 5 19v1a1.5 1.5 0 0 0 1.5 1.5Z"/><path d="M9 19.8h3"/></symbol>
+  <!-- 체육·문화시설: 공 (공원·당구장·볼링장을 한데 묶는 표시) -->
+  <symbol id="ico-sports" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><path d="M12 2.8v18.4"/><path d="M2.8 12h18.4"/><path d="M5.6 5.6c3.5 3.5 3.5 9.3 0 12.8"/><path d="M18.4 5.6c-3.5 3.5-3.5 9.3 0 12.8"/></symbol>
+  <symbol id="ico-center" viewBox="0 0 24 24"><path d="M12 22s7-6.6 7-12.2A7 7 0 1 0 5 9.8C5 15.4 12 22 12 22Z"/><circle cx="12" cy="9.6" r="2.6"/></symbol>
+  <symbol id="ico-photo" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="15" rx="2.2"/><path d="M8 5.5 9.6 2.8h4.8L16 5.5"/><circle cx="12" cy="13" r="3.8"/></symbol>
+  <symbol id="ico-walk" viewBox="0 0 24 24"><circle cx="13" cy="3.8" r="2"/><path d="M11.5 21.5 13 15l-2.6-2.4.8-5.1 3.3 3.2 3 1"/><path d="M11.2 7.5 8 9.7l-1 3.4"/><path d="M13 15l3 6.5"/></symbol>
+  <symbol id="ico-pen" viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></symbol>
+  <symbol id="ico-out" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></symbol>
+</svg>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <span class="eyebrow"><svg><use href="#ico-center"/></svg>남동구 늘품발달장애인평생교육센터</span>
+    <h1>우리 동네 지역사회 지도</h1>
+    <p class="dek">센터에서 걸어갈 수 있는 곳들입니다. 지도에서 동그라미를 누르면 사진과 설명이 나옵니다.</p>
+  </header>
+
+  <div class="filterbar">
+    <div class="filter-label">보고 싶은 곳을 골라 주세요</div>
+    <div class="chips" role="group" aria-label="장소 종류 고르기">
+      <button class="chip" data-cat="all" aria-pressed="true">전체</button>
+      <button class="chip" data-cat="cafe" aria-pressed="false"><svg><use href="#ico-cafe"/></svg>카페</button>
+      <button class="chip" data-cat="food" aria-pressed="false"><svg><use href="#ico-food"/></svg>음식점</button>
+      <button class="chip" data-cat="mart" aria-pressed="false"><svg><use href="#ico-mart"/></svg>마트</button>
+      <button class="chip" data-cat="unmanned" aria-pressed="false"><svg><use href="#ico-unmanned"/></svg>무인매장</button>
+      <button class="chip" data-cat="public" aria-pressed="false"><svg><use href="#ico-public"/></svg>공공기관</button>
+      <button class="chip" data-cat="sports" aria-pressed="false"><svg><use href="#ico-sports"/></svg>체육·문화시설</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="col-map">
+      <div id="map" role="application" aria-label="센터 주변 지도"></div>
+
+      <div class="editbanner" id="banner" hidden></div>
+
+      <div class="tools">
+        <button class="btn btn-main" id="toggleEdit"><svg><use href="#ico-pen"/></svg>편집모드 켜기</button>
+        <button class="btn" id="moveCenter" hidden>센터 위치 다시 잡기</button>
+        <button class="btn btn-main" id="exportBtn" hidden><svg><use href="#ico-out"/></svg>저장 (data.js 내려받기)</button>
+        <button class="btn btn-warn" id="resetBtn" hidden>수정 내용 되돌리기</button>
+        <span class="tool-note" id="toolNote"></span>
+      </div>
+    </div>
+
+    <div class="col-list">
+      <p class="count" id="count"></p>
+      <div class="list" id="list"></div>
+    </div>
+  </div>
+
+  <section class="note" id="editNote">
+    <h2>이 지도를 고치는 방법</h2>
+    <p><b>1. [편집모드 켜기]</b> → 지도의 빈 곳을 누르면 그 자리에 새 장소가 추가됩니다. 이미 있는 핀을 누르면 내용을 고치거나 지울 수 있고, 핀을 <b>끌어서</b> 위치를 옮길 수도 있습니다.</p>
+    <p><b>2. 다 고쳤으면 [저장]</b> → <code>data.js</code> 파일이 내려받아집니다.</p>
+    <p><b>3. 내려받은 <code>data.js</code> 를 GitHub에 올리기</b> → 저장소에서 <code>data.js</code> 를 열고 파일을 끌어다 놓은 뒤 <b>Commit</b>. 1~2분 뒤 웹사이트에 반영됩니다.</p>
+    <p><code>index.html</code> 은 <b>건드릴 필요가 없습니다.</b> 지도의 내용은 전부 <code>data.js</code> 에 있습니다.</p>
+    <p style="color:var(--ink-3)">GitHub에 올리기 전까지 고친 내용은 <b>이 브라우저에만</b> 남아 있습니다. 다른 사람 화면에 보이려면 반드시 올려야 합니다.</p>
+  </section>
+
+</div>
+
+<!-- 장소 편집 창 -->
+<dialog id="dlg">
+  <form method="dialog" id="dlgForm">
+    <div class="dlg-h" id="dlgTitle">장소 추가</div>
+    <div class="dlg-b">
+      <div class="f">
+        <label for="fName">장소 이름</label>
+        <input type="text" id="fName" required placeholder="예: 스타벅스 인천구월점">
+      </div>
+      <div class="f-row">
+        <div class="f">
+          <label for="fCat">종류</label>
+          <select id="fCat">
+            <option value="cafe">카페</option>
+            <option value="food">음식점</option>
+            <option value="mart">마트</option>
+            <option value="unmanned">무인매장</option>
+            <option value="public">공공기관</option>
+            <option value="sports">체육·문화시설</option>
+          </select>
+          <span class="hint">직원이 없으면 카페든 아이스크림가게든 <b>무인매장</b>입니다.</span>
+        </div>
+        <div class="f">
+          <label for="fWalk">도보 (분)</label>
+          <input type="number" id="fWalk" min="1" max="60" value="5">
+        </div>
+      </div>
+      <div class="f">
+        <label for="fAddr">주소</label>
+        <input type="text" id="fAddr" placeholder="인천 남동구 …">
+      </div>
+      <div class="f">
+        <label for="fPractice">여기서 연습해요</label>
+        <span class="hint">실제로 하는 순서대로 적어주세요. 이 칸이 이 지도의 핵심입니다.</span>
+        <textarea id="fPractice" placeholder="키오스크로 주문하기 → 진동벨 받기 → 벨이 울리면 카운터에서 받기"></textarea>
+      </div>
+      <div class="f">
+        <label for="fFacts">이용 정보</label>
+        <span class="hint">쉼표(,)로 구분해서 적어주세요.</span>
+        <input type="text" id="fFacts" placeholder="1층, 계단 없음, 화장실 있음">
+      </div>
+      <div class="f">
+        <label for="fPhoto">사진 (여러 장 가능)</label>
+        <span class="hint">가게 앞 / 주문하는 곳 / 안쪽 자리 순으로 넣으면 좋습니다. 크기는 자동으로 줄입니다.</span>
+        <input type="file" id="fPhoto" accept="image/*" multiple>
+        <div class="prev" id="fPrev" hidden></div>
+      </div>
+    </div>
+    <div class="dlg-f">
+      <button type="submit" class="btn btn-main">저장</button>
+      <button type="button" class="btn" id="dlgCancel">취소</button>
+      <button type="button" class="btn btn-warn" id="dlgDel">이 장소 지우기</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 저장 안내 창 -->
+<dialog id="outDlg">
+  <div class="dlg-h">data.js 를 내려받았습니다</div>
+  <div class="dlg-b">
+    <p style="margin:0;font-size:15.5px;color:var(--ink);line-height:1.65">
+      <b>아직 반영된 게 아닙니다.</b> 마지막 한 단계가 남았습니다.
+    </p>
+    <ol style="margin:0;padding-left:22px;font-size:15px;color:var(--ink-2);line-height:1.75">
+      <li>내려받기 폴더에서 <code>data.js</code> 를 찾으세요.</li>
+      <li>그 파일을 <b>지도 폴더</b>(index.html 이 있는 곳)에 <b>덮어쓰기</b> 하세요.</li>
+      <li>새로고침하면 반영됩니다.</li>
+    </ol>
+    <p style="margin:0;padding:11px 13px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:14px;font-weight:700;line-height:1.6">
+      파일 이름이 <code>data(1).js</code> 처럼 바뀌었으면 <code>data.js</code> 로 고쳐서 덮어쓰세요.
+      이름이 다르면 지도가 못 읽습니다.
+    </p>
+    <p style="margin:0;font-size:14px;color:var(--ink-3);line-height:1.6">
+      덮어쓰기 전까지 고친 내용은 이 브라우저에 그대로 남아 있으니, 창을 닫아도 사라지지 않습니다.
+    </p>
+  </div>
+  <div class="dlg-f">
+    <button class="btn btn-main" id="outClose">알겠습니다</button>
+  </div>
+</dialog>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<!-- 지도의 내용(장소 데이터)은 data.js 에 있습니다. 고칠 일이 있으면 그 파일만 바꾸세요. -->
+<script src="data.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   프로그램 코드 — 건드릴 필요 없습니다.
+   장소를 고치려면 data.js 를 바꾸세요 (또는 편집모드 → [저장] 버튼).
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* data.js 를 못 읽었을 때 — 백지 대신 원인을 알려준다 */
+  if (typeof CENTER === "undefined" || typeof PLACES === "undefined") {
+    $("map").style.display = "none";
+    $("list").innerHTML =
+      '<div class="empty" style="color:var(--warn);border-color:var(--warn)">' +
+      '<b style="font-size:17px">data.js 파일을 읽지 못했습니다.</b><br><br>' +
+      'index.html 과 <b>같은 폴더</b>에 <b>data.js</b> 라는 이름의 파일이 있어야 합니다.<br>' +
+      '파일 이름이 바뀌었거나 (data(1).js 등), 다른 폴더에 있지 않은지 확인해 주세요.' +
+      '</div>';
+    $("count").textContent = "";
+    document.querySelector(".filterbar").hidden = true;
+    document.querySelector(".tools").hidden = true;
+    return;
+  }
+
+  /* 분류는 "여기가 무엇인가"가 아니라 "무엇을 연습하는가"로 나눈다.
+     그래서 무인카페는 카페가 아니라 무인매장이다 — 직원이 없으면
+     연습하는 기술(기계로 혼자 주문·결제)이 같기 때문. */
+  /* 편집 도구는 주소 뒤에 ?edit 를 붙였을 때만 나온다.
+     QR로 들어오는 이용자에게 [편집모드] 버튼이 보이면 눌렀다가 당황하게 되고,
+     이 지도는 발달장애인 이용자가 보는 것이라 그 혼란이 특히 크다.
+     비밀번호는 아니다 — 실수로 누르는 걸 막는 장치일 뿐.
+     "누가 진짜로 고칠 수 있는가"는 GitHub 로그인이 정한다. */
+  var CAN_EDIT = /(^|[?&])edit(=|&|$)/.test(location.search);
+
+  var CAT = {
+    cafe:     { label: "카페",     icon: "#ico-cafe" },
+    food:     { label: "음식점",   icon: "#ico-food" },
+    mart:     { label: "마트",     icon: "#ico-mart" },
+    unmanned: { label: "무인매장", icon: "#ico-unmanned" },
+    public:   { label: "공공기관", icon: "#ico-public" },
+    sports:   { label: "체육·문화시설", icon: "#ico-sports" }
+  };
+  var DRAFT_KEY = "neulpum-map-draft-v1";
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  /* ── 상태 ── */
+  var center = JSON.parse(JSON.stringify(CENTER));
+  var places = JSON.parse(JSON.stringify(PLACES));
+  var editing = false, dirty = false, downloaded = false, filterCat = "all";
+  var placingCenter = false, activeN = null, editingN = null, pendingLatLng = null, pendingPhotos = [];
+
+  /* 내용 비교용 정규화.
+     JSON.stringify 직접 비교는 못 쓴다 — 편집모드가 만든 객체와 data.js 의
+     리터럴은 키 순서가 달라서, 내용이 같아도 문자열이 달라진다.
+     zoom 은 지도를 움직이면 바뀌는 값이라 "내용"으로 치지 않는다. */
+  var SEP = "";
+  function canonShots(p) {
+    return shots(p).map(function (f) { return f.src + "~" + (f.caption || ""); }).join("|");
+  }
+  function canonPlace(p) {
+    return [
+      p.n, p.cat, p.name, p.walk,
+      (+p.lat).toFixed(7), (+p.lng).toFixed(7),
+      p.addr || "", p.practice || "",
+      (p.facts || []).join("|"),
+      canonShots(p)
+    ].join(SEP);
+  }
+  function canonCenter(c) {
+    return [c.name, c.addr || "", (+c.lat).toFixed(7), (+c.lng).toFixed(7)].join(SEP);
+  }
+  function sameContent(dc, dp, fc, fp) {
+    if (canonCenter(dc) !== canonCenter(fc)) return false;
+    if (dp.length !== fp.length) return false;
+    for (var i = 0; i < dp.length; i++) {
+      if (canonPlace(dp[i]) !== canonPlace(fp[i])) return false;
+    }
+    return true;
+  }
+
+  (function loadDraft() {
+    try {
+      var raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (!d || !d.places) return;
+
+      // data.js 가 이미 임시저장과 같은 내용이면 → 파일 교체가 끝난 것.
+      // 임시저장은 역할이 끝났으므로 정리하고 깨끗한 상태로 시작한다.
+      if (sameContent(d.center, d.places, CENTER, PLACES)) {
+        localStorage.removeItem(DRAFT_KEY);
+        return;
+      }
+      // 다르면 → 아직 파일에 반영 안 된 작업이 남아있다. 그것을 살린다.
+      center = d.center; places = d.places; dirty = true;
+    } catch (e) { /* 임시저장이 깨졌으면 그냥 data.js 내용 사용 */ }
+  })();
+  function saveDraft() {
+    dirty = true;
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ center: center, places: places })); }
+    catch (e) { alert("사진이 많아서 브라우저 임시 저장 공간이 찼습니다.\n\n지금 바로 [저장] 을 눌러 data.js 를 내려받아 덮어써 주세요.\n그렇게 하지 않으면 새로고침할 때 작업이 사라질 수 있습니다."); }
+    syncTools();
+  }
+
+  /* ── 지도 ── */
+  var isDark = function () {
+    var t = document.documentElement.getAttribute("data-theme");
+    return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  };
+  var map = L.map("map", { scrollWheelZoom: false }).setView([center.lat, center.lng], center.zoom);
+  map.on("click", function (e) {
+    if (placingCenter) { center.lat = e.latlng.lat; center.lng = e.latlng.lng; placingCenter = false; saveDraft(); render(); syncTools(); return; }
+    if (editing) openForm(null, e.latlng);
+  });
+  // 겹친 핀을 벌리는 양이 픽셀 기준이라, 줌이 바뀌면 다시 그려야 한다.
+  // (팝업이 열려 있으면 다시 그리는 순간 닫히므로 그때는 건너뛴다)
+  map.on("zoomend", function () {
+    if (editing || map._popup) return;
+    renderMap();
+  });
+
+  var TILES = {
+    light: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    dark:  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+  };
+  var ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  var tileLayer = L.tileLayer(isDark() ? TILES.dark : TILES.light, { maxZoom: 19, attribution: ATTR }).addTo(map);
+  function retile() { tileLayer.setUrl(isDark() ? TILES.dark : TILES.light); }
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", retile);
+  new MutationObserver(retile).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  var markers = {}, centerMarker = null;
+
+  /* 같은 건물에 여러 곳이 있으면(상가 등) 주소 좌표가 똑같아서 핀이 완전히 포개진다.
+     뒤에 깔린 핀은 클릭조차 안 되므로 겹치는 것들을 작은 원으로 벌려 놓는다.
+
+     벌리는 양은 미터가 아니라 "화면 픽셀" 기준이다. 미터로 하면 줌아웃했을 때
+     간격이 다시 붙어버린다. 픽셀 기준이면 어느 줌에서든 눌를 수 있다.
+     대신 줌이 바뀔 때마다 다시 계산해야 한다(아래 map.on("zoomend")).
+
+     data.js 의 좌표는 건드리지 않는다 — 데이터는 진실을 유지하고 화면만 조정. */
+  var SPREAD_PX = 21;    // 핀 지름이 34px. 이 정도면 서로 눌를 수 있다.
+  var SPREAD_MAX_M = 28; // 다만 실제 위치에서 이보다 멀어지진 않게 (줌아웃 시 보호)
+
+  var NEAR_M = 18;   // 이 거리 안이면 한 덩어리로 보고 벌린다 (옆가게끼리도 겹치므로)
+
+  function spreadCoords(list) {
+    var out = {};
+    /* 좌표가 "똑같은" 것만 묶으면 부족하다 — 옆가게라 6m 떨어진 곳도 화면에선 겹친다.
+       그래서 가까운 것끼리 덩어리로 묶는다(단순 탐욕적 군집화). */
+    var groups = [];
+    list.forEach(function (p) {
+      var ll = L.latLng(+p.lat, +p.lng);
+      var g = null;
+      for (var i = 0; i < groups.length; i++) {
+        if (groups[i].at.distanceTo(ll) <= NEAR_M) { g = groups[i]; break; }
+      }
+      if (g) { g.items.push(p); } else { groups.push({ at: ll, items: [p] }); }
+    });
+
+    var z = map.getZoom();
+    groups.forEach(function (grp) {
+      var g = grp.items;
+      if (g.length === 1) { out[g[0].n] = { lat: +g[0].lat, lng: +g[0].lng, shared: false }; return; }
+
+      // 이 줌에서 1px 이 몇 m 인지 구해, 벌릴 픽셀을 미터로 환산하고 상한을 씌운다
+      var c = L.latLng(+g[0].lat, +g[0].lng);
+      var pc = map.project(c, z);
+      var mPerPx = c.distanceTo(map.unproject(pc.add([1, 0]), z));
+      var rM = Math.min(SPREAD_PX * mPerPx, SPREAD_MAX_M);
+
+      var dLat = rM / 111000;
+      var dLng = rM / (111320 * Math.cos(+g[0].lat * Math.PI / 180));
+      g.forEach(function (p, i) {
+        var a = (2 * Math.PI * i) / g.length - Math.PI / 2;
+        out[p.n] = {
+          lat: +p.lat + dLat * Math.sin(a),
+          lng: +p.lng + dLng * Math.cos(a),
+          shared: true
+        };
+      });
+    });
+    return out;
+  }
+
+  function renderMap() {
+    Object.keys(markers).forEach(function (k) { map.removeLayer(markers[k]); });
+    markers = {};
+    if (centerMarker) map.removeLayer(centerMarker);
+
+    centerMarker = L.marker([center.lat, center.lng], {
+      zIndexOffset: 1000,
+      icon: L.divIcon({
+        className: "mk mk-center", iconSize: [42, 42], iconAnchor: [21, 21], popupAnchor: [0, -22],
+        html: '<i><svg viewBox="0 0 24 24"><use href="#ico-center"/></svg></i>'
+      })
+    }).addTo(map).bindPopup(
+      '<div class="pop-b"><h3 class="name">' + esc(center.name) + '</h3>' +
+      '<p class="addr">' + esc(center.addr) + '</p></div>'
+    );
+
+    var shown = places.filter(function (p) { return filterCat === "all" || p.cat === filterCat; });
+    // 편집모드에서는 벌리지 않는다 — 벌어진 자리에서 핀을 끌면
+    // 그 가짜 좌표가 진짜로 저장돼 버린다. 편집 중엔 항상 실제 위치를 보여준다.
+    var at = editing ? null : spreadCoords(shown);
+
+    shown.forEach(function (p) {
+      var pos = at ? at[p.n] : { lat: +p.lat, lng: +p.lng, shared: false };
+      var m = L.marker([pos.lat, pos.lng], {
+        draggable: editing,
+        icon: L.divIcon({
+          className: "mk", iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -18],
+          html: '<i>' + p.n + "</i>"
+        })
+      }).addTo(map);
+      m.getElement() && m.getElement().setAttribute("data-cat", p.cat);
+      m.on("add", function () { var el = m.getElement(); if (el) el.setAttribute("data-cat", p.cat); });
+
+      if (editing) {
+        m.on("dragend", function (e) {
+          var ll = e.target.getLatLng();
+          p.lat = +ll.lat.toFixed(7); p.lng = +ll.lng.toFixed(7);
+          saveDraft();
+        });
+        m.on("click", function () { openForm(p, null); });
+      } else {
+        m.bindPopup(popupHTML(p), { autoPanPadding: [24, 24] });
+        m.on("click", function () { setActive(p.n, false); });
+      }
+      markers[p.n] = m;
+    });
+  }
+
+  /* 예전 데이터는 photo: "..." 한 장, 지금은 photos: [{src,caption}].
+     둘 다 받아준다 — 옛 data.js 를 그대로 열어도 깨지지 않도록. */
+  function shots(p) {
+    if (p.photos && p.photos.length) {
+      return p.photos.map(function (f) {
+        return typeof f === "string" ? { src: f, caption: "" } : f;
+      });
+    }
+    if (p.photo) return [{ src: p.photo, caption: "" }];
+    return [];
+  }
+
+  /* 모르는 분류가 들어와도 죽지 않게. 분류 이름을 바꾸거나 손으로 오타를 내도
+     화면 전체가 백지가 되는 것보다는 "카페"로라도 뜨는 편이 낫다. */
+  function catOf(p) { return CAT[p.cat] || CAT.cafe; }
+
+  function tagsHTML(p) {
+    return '<span class="tag tag-cat"><svg aria-hidden="true"><use href="' + catOf(p).icon + '"/></svg>' + catOf(p).label + '</span>' +
+      '<span class="tag tag-walk"><svg aria-hidden="true"><use href="#ico-walk"/></svg>도보 ' + p.walk + '분</span>';
+  }
+
+  function popupHTML(p) {
+    var ph = shots(p);
+    var strip = ph.length
+      ? '<div class="pop-strip">' + ph.map(function (f) {
+          return '<div class="pop-frame"><img loading="lazy" src="' + esc(f.src) + '" alt="' +
+                 esc(p.name) + (f.caption ? " " + esc(f.caption) : "") + '"></div>';
+        }).join("") + '</div>'
+      : '<div class="pop-none">사진 없음</div>';
+    return strip +
+      '<div class="pop-b" data-cat="' + p.cat + '">' +
+        '<div class="tagrow">' + tagsHTML(p) + '</div>' +
+        '<h3 class="name">' + esc(p.name) + '</h3>' +
+        (p.addr ? '<p class="addr">' + esc(p.addr) + '</p>' : '') +
+        (p.practice ? '<div class="practice"><b>여기서 연습해요</b><p>' + esc(p.practice) + '</p></div>' : '') +
+        (p.facts && p.facts.length ? '<ul class="facts">' + p.facts.map(function (f) { return "<li>" + esc(f) + "</li>"; }).join("") + '</ul>' : '') +
+        '<a class="card-link" target="_blank" rel="noopener noreferrer" href="https://map.naver.com/p/search/' +
+          encodeURIComponent(p.name) + '">지도 앱에서 길찾기</a>' +
+      '</div>';
+  }
+
+  /* ── 목록 ── */
+  function renderList() {
+    var list = $("list");
+    list.innerHTML = "";
+    var shown = places.filter(function (p) { return filterCat === "all" || p.cat === filterCat; });
+
+    if (!shown.length) {
+      var d = document.createElement("div");
+      d.className = "empty";
+      d.textContent = places.length
+        ? "이 종류로 조사한 곳이 아직 없습니다."
+        : "아직 등록된 장소가 없습니다. [편집모드 켜기]를 누르고 지도를 눌러 추가하세요.";
+      list.appendChild(d);
+    }
+
+    shown.forEach(function (p) {
+      var el = document.createElement("article");
+      el.className = "card";
+      el.dataset.cat = p.cat; el.dataset.n = p.n; el.id = "place-" + p.n;
+      var ph = shots(p);
+      var strip = ph.length
+        ? ph.map(function (f) {
+            return '<div class="frame"><img loading="lazy" src="' + esc(f.src) + '" alt="' +
+                   esc(p.name) + (f.caption ? " " + esc(f.caption) : "") + '">' +
+                   (f.caption ? '<span class="cap">' + esc(f.caption) + "</span>" : "") + "</div>";
+          }).join("")
+        : '<div class="strip-empty"><svg aria-hidden="true"><use href="#ico-photo"/></svg><b>사진 없음</b></div>';
+      el.innerHTML =
+        '<span class="shot-num" aria-hidden="true">' + p.n + "</span>" +
+        '<div class="strip">' + strip + "</div>" +
+        '<div class="body">' +
+          '<div class="tagrow">' + tagsHTML(p) + "</div>" +
+          '<h3 class="name">' + esc(p.name) + "</h3>" +
+          (p.addr ? '<p class="addr">' + esc(p.addr) + "</p>" : "") +
+          (p.practice ? '<div class="practice"><b>여기서 연습해요</b><p>' + esc(p.practice) + "</p></div>" : "") +
+          (p.facts && p.facts.length ? '<ul class="facts">' + p.facts.map(function (f) { return "<li>" + esc(f) + "</li>"; }).join("") + "</ul>" : "") +
+          '<a class="card-link" target="_blank" rel="noopener noreferrer" href="https://map.naver.com/p/search/' +
+            encodeURIComponent(p.name) + '">지도 앱에서 길찾기</a>' +
+        "</div>";
+      el.addEventListener("click", function (e) {
+        if (e.target.closest("a")) return;
+        if (editing) { openForm(p, null); return; }
+        setActive(p.n, true);
+      });
+      list.appendChild(el);
+    });
+
+    $("count").textContent = places.length
+      ? shown.length + "곳을 보여주고 있어요"
+      : "";
+  }
+
+  function setActive(n, fromList) {
+    activeN = activeN === n ? null : n;
+    document.querySelectorAll(".card").forEach(function (el) {
+      el.classList.toggle("is-active", Number(el.dataset.n) === activeN);
+    });
+    if (!activeN) return;
+    if (fromList && markers[activeN]) {
+      map.panTo(markers[activeN].getLatLng());
+      markers[activeN].openPopup();
+    } else {
+      var card = $("place-" + activeN);
+      if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  function render() { renderMap(); renderList(); }
+
+  /* ── 필터 ── */
+  Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (c) {
+    c.addEventListener("click", function () {
+      filterCat = c.dataset.cat;
+      document.querySelectorAll(".chip").forEach(function (o) {
+        o.setAttribute("aria-pressed", String(o.dataset.cat === filterCat));
+      });
+      activeN = null;
+      render();
+    });
+  });
+
+  /* ── 편집 ── */
+  function syncTools() {
+    // ?edit 없이 들어온 사람에게는 편집 도구와 안내문을 통째로 감춘다
+    if (!CAN_EDIT) {
+      document.querySelector(".tools").hidden = true;
+      $("banner").hidden = true;
+      if ($("editNote")) $("editNote").hidden = true;
+      return;
+    }
+    $("toggleEdit").innerHTML = editing
+      ? '<svg><use href="#ico-pen"/></svg>편집 끝내기'
+      : '<svg><use href="#ico-pen"/></svg>편집모드 켜기';
+    $("moveCenter").hidden = !editing;
+    $("exportBtn").hidden = !editing && !dirty;
+    $("resetBtn").hidden = !dirty;
+    $("map").classList.toggle("editing", editing);
+
+    var b = $("banner");
+    if (placingCenter) {
+      b.hidden = false;
+      b.textContent = "센터가 있는 자리를 지도에서 눌러 주세요.";
+    } else if (editing) {
+      b.hidden = false;
+      b.textContent = "편집모드입니다. 지도의 빈 곳을 누르면 장소가 추가되고, 핀을 누르면 고칠 수 있습니다. 핀을 끌어서 옮길 수도 있어요.";
+    } else if (dirty && downloaded) {
+      b.hidden = false;
+      b.textContent = "내려받은 data.js 를 지도 폴더에 덮어쓰면 완료됩니다. 덮어쓰기 전까지는 이 브라우저에서만 보입니다.";
+    } else if (dirty) {
+      b.hidden = false;
+      b.textContent = "고친 내용이 아직 이 브라우저에만 있습니다. [저장] 을 눌러 data.js 를 내려받아 덮어써야 다른 사람도 볼 수 있습니다.";
+    } else {
+      b.hidden = true;
+    }
+    $("toolNote").textContent = dirty ? (downloaded ? "덮어쓰기 하면 완료" : "저장 안 함") : "";
+  }
+
+  $("toggleEdit").addEventListener("click", function () {
+    editing = !editing;
+    placingCenter = false;
+    activeN = null;
+    map.closePopup();
+    syncTools(); render();
+  });
+
+  $("moveCenter").addEventListener("click", function () {
+    placingCenter = !placingCenter;
+    syncTools();
+  });
+
+  $("resetBtn").addEventListener("click", function () {
+    if (!confirm("고친 내용을 모두 버리고 파일에 저장된 원래 내용으로 되돌립니다. 계속할까요?")) return;
+    localStorage.removeItem(DRAFT_KEY);
+    center = JSON.parse(JSON.stringify(CENTER));
+    places = JSON.parse(JSON.stringify(PLACES));
+    dirty = false; editing = false; placingCenter = false;
+    map.setView([center.lat, center.lng], center.zoom);
+    syncTools(); render();
+  });
+
+  /* ── 장소 편집 창 ── */
+  var dlg = $("dlg");
+  function openForm(p, latlng) {
+    editingN = p ? p.n : null;
+    pendingLatLng = latlng;
+    // 원본을 건드리지 않도록 복사본으로 편집 — 취소해도 되돌릴 수 있게
+    pendingPhotos = p ? shots(p).map(function (f) { return { src: f.src, caption: f.caption || "" }; }) : [];
+    $("dlgTitle").textContent = p ? "장소 고치기" : "장소 추가";
+    $("fName").value = p ? p.name : "";
+    $("fCat").value = p ? p.cat : "cafe";
+    $("fWalk").value = p ? p.walk : 5;
+    $("fAddr").value = p ? (p.addr || "") : "";
+    $("fPractice").value = p ? (p.practice || "") : "";
+    $("fFacts").value = p && p.facts ? p.facts.join(", ") : "";
+    $("fPhoto").value = "";
+    $("dlgDel").hidden = !p;
+    showPrev(pendingPhotos);
+    dlg.showModal();
+    $("fName").focus();
+  }
+  /* 사진 여러 장 미리보기 + 설명 달기 */
+  function showPrev(list) {
+    var prev = $("fPrev");
+    prev.innerHTML = "";
+    if (!list || !list.length) { prev.hidden = true; return; }
+    prev.hidden = false;
+    list.forEach(function (f, i) {
+      var row = document.createElement("div");
+      row.className = "prev-row";
+      row.innerHTML =
+        '<img src="' + esc(f.src) + '" alt="">' +
+        '<input type="text" value="' + esc(f.caption || "") + '" placeholder="설명 (예: 가게 앞)" aria-label="사진 설명">' +
+        '<button type="button" class="btn btn-warn" aria-label="이 사진 빼기">빼기</button>';
+      row.querySelector("input").addEventListener("input", function (e) { f.caption = e.target.value; });
+      row.querySelector("button").addEventListener("click", function () {
+        pendingPhotos.splice(i, 1); showPrev(pendingPhotos);
+      });
+      prev.appendChild(row);
+    });
+  }
+  $("dlgCancel").addEventListener("click", function () { dlg.close(); });
+
+  // 사진 여러 장 추가 → 최대 900px, JPEG로 압축해서 넣기
+  $("fPhoto").addEventListener("change", function (e) {
+    var files = Array.prototype.slice.call(e.target.files || []);
+    if (!files.length) return;
+    files.forEach(function (file) {
+      var img = new Image();
+      img.onload = function () {
+        var max = 900, w = img.width, h = img.height;
+        if (w > max || h > max) { var s = max / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s); }
+        var cv = document.createElement("canvas");
+        cv.width = w; cv.height = h;
+        cv.getContext("2d").drawImage(img, 0, 0, w, h);
+        pendingPhotos.push({ src: cv.toDataURL("image/jpeg", 0.72), caption: "" });
+        showPrev(pendingPhotos);
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = function () { alert(file.name + " 사진을 읽지 못했습니다."); };
+      img.src = URL.createObjectURL(file);
+    });
+    e.target.value = "";
+  });
+
+  $("dlgForm").addEventListener("submit", function () {
+    var name = $("fName").value.trim();
+    if (!name) return;
+    var facts = $("fFacts").value.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    var data = {
+      cat: $("fCat").value,
+      name: name,
+      walk: Number($("fWalk").value) || 5,
+      addr: $("fAddr").value.trim(),
+      practice: $("fPractice").value.trim(),
+      facts: facts,
+      photos: pendingPhotos
+    };
+    if (editingN != null) {
+      var p = places.find(function (x) { return x.n === editingN; });
+      delete p.photo;   // 옛 형식 잔재 제거
+      Object.assign(p, data);
+    } else {
+      var maxN = places.reduce(function (a, x) { return Math.max(a, x.n); }, 0);
+      data.n = maxN + 1;
+      data.lat = +pendingLatLng.lat.toFixed(7);
+      data.lng = +pendingLatLng.lng.toFixed(7);
+      places.push(data);
+    }
+    saveDraft(); render();
+  });
+
+  $("dlgDel").addEventListener("click", function () {
+    var p = places.find(function (x) { return x.n === editingN; });
+    if (!p || !confirm('"' + p.name + '"을(를) 지웁니다. 계속할까요?')) return;
+    places = places.filter(function (x) { return x.n !== editingN; });
+    places.forEach(function (x, i) { x.n = i + 1; });   // 번호 다시 매기기
+    dlg.close();
+    saveDraft(); render();
+  });
+
+  /* ── 저장 (data.js 파일로 내려받기) ── */
+  function jsStr(s) { return JSON.stringify(s == null ? "" : String(s)); }
+  function buildExport() {
+    var out = "";
+    out += "/* ══════════════════════════════════════════════════════════════════════════\n";
+    out += "   늘품 지역사회 지도 — 데이터 파일\n";
+    out += "   마지막 저장: " + new Date().toLocaleString("ko-KR") + "\n";
+    out += "   이 파일이 지도의 \"내용\"입니다. index.html 은 건드릴 필요가 없습니다.\n";
+    out += "   ══════════════════════════════════════════════════════════════════════════ */\n\n";
+    out += "var CENTER = {\n";
+    out += "  name: " + jsStr(center.name) + ",\n";
+    out += "  addr: " + jsStr(center.addr) + ",\n";
+    out += "  lat: " + (+center.lat).toFixed(7) + ",\n";
+    out += "  lng: " + (+center.lng).toFixed(7) + ",\n";
+    out += "  zoom: " + (map.getZoom() || center.zoom) + "\n";
+    out += "};\n\nvar PLACES = [\n";
+    out += places.map(function (p) {
+      var ph = shots(p);
+      var phTxt = ph.length
+        ? "[\n" + ph.map(function (f) {
+            return "      { src: " + jsStr(f.src) + ", caption: " + jsStr(f.caption || "") + " }";
+          }).join(",\n") + "\n    ]"
+        : "[]";
+      return "  {\n" +
+        "    n: " + p.n + ", cat: " + jsStr(p.cat) + ", name: " + jsStr(p.name) + ", walk: " + p.walk + ",\n" +
+        "    lat: " + (+p.lat).toFixed(7) + ", lng: " + (+p.lng).toFixed(7) + ",\n" +
+        "    addr: " + jsStr(p.addr) + ",\n" +
+        "    practice: " + jsStr(p.practice) + ",\n" +
+        "    facts: " + JSON.stringify(p.facts || []) + ",\n" +
+        "    photos: " + phTxt + "\n" +
+        "  }";
+    }).join(",\n");
+    out += "\n];\n";
+    return out;
+  }
+  $("exportBtn").addEventListener("click", function () {
+    var text = buildExport();
+    var blob = new Blob([text], { type: "application/javascript;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "data.js";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+
+    // 임시저장은 일부러 지우지 않는다.
+    // 내려받았다고 해서 파일이 교체된 건 아니므로, 여기서 지우면
+    // "다운로드만 하고 덮어쓰기 안 한 채 새로고침" → 작업 전체 증발.
+    // 대신 다음 로드 때 data.js 와 임시저장을 비교해서 같으면 그때 지운다.
+    downloaded = true;
+    $("outDlg").showModal();
+    syncTools();
+  });
+  $("outClose").addEventListener("click", function () { $("outDlg").close(); });
+
+  window.addEventListener("beforeunload", function (e) {
+    if (!dirty) return;
+    e.preventDefault(); e.returnValue = "";
+  });
+
+  syncTools();
+  render();
+})();
+</script>
+</body>
+</html>
